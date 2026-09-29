@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Scanner;
 
 public class LeagueManager {
@@ -112,12 +113,10 @@ public class LeagueManager {
           
           // Display list of available players
           
-          List<Player> playerList = Arrays.asList(players);
-          
-          List<Player> sortedPlayers = displayPlayerOrder(playerList);
+          List<Player> availablePlayers = getAvailablePlayers(players, allTeams);
   
           int numCounter = 1;
-          for(Player existingPlayer : sortedPlayers) {
+          for(Player existingPlayer : availablePlayers) {
             System.out.printf("%d. %s %s - Height: %d - Previous Experience: %b%n", numCounter, 
                               existingPlayer.getFirstName(),
                               existingPlayer.getLastName(),
@@ -135,7 +134,7 @@ public class LeagueManager {
   
         // Gets selected player
   
-          Player selectedPlayer = sortedPlayers.get(userPlayerSelection - 1);
+          Player selectedPlayer = availablePlayers.get(userPlayerSelection - 1);
       
         // Add player to team
           selectedTeam.addPlayer(selectedPlayer); 
@@ -191,68 +190,45 @@ public class LeagueManager {
         
           // HEIGHT REPORT
         } else if (menuChoice.equalsIgnoreCase("Report")) {
-            List<Team> sortedTeams = displayTeamOrder(allTeams);
-            
-            int counter = 1;
-            for (Team team : sortedTeams) {
-              System.out.printf("%d. %s%n", counter, team.getTeamName());
-              counter++;
-            }
-            System.out.print("Select Team: ");
-            int userTeamSelection = scanner.nextInt();
-            System.out.println();
-                                
-           Team selectedTeam = sortedTeams.get(userTeamSelection - 1);
+            Team selectedTeams = chosenTeam(scanner, allTeams);
         
-           List<Player> heightGroupOne = new ArrayList<>(); // height group one will store 35-40inch
-           List<Player> heightGroupTwo = new ArrayList<>(); // height group two will store 41-46 inch
-           List<Player> heightGroupThree = new ArrayList<>(); //height group three will store 47-50inc
+           //Making one big organizer        
+           Map<String, List<Player>> heightGroups = new LinkedHashMap<>();
+        
+           heightGroups.put("35-40 inches", new ArrayList<>());
+           heightGroups.put("41-46 inches", new ArrayList<>());
+           heightGroups.put("47-50 inches", new ArrayList<>());
             
-           for (Player player : selectedTeam.getPlayers()) {
+           for (Player player : selectedTeams.getPlayers()) {
             
              int height = player.getHeightInInches();
              
              if(height >= 35 && height <= 40) {
-              heightGroupOne.add(player);
+              heightGroups.get("35-40 inches").add(player);
                 
              } else if (height >= 41 && height <= 46) {
-                heightGroupTwo.add(player);
+                heightGroups.get("41-46 inches").add(player);
+               
              } else if (height >= 47 && height <= 50){
-                heightGroupThree.add(player);
+                heightGroups.get("47-50 inches").add(player);
              }
            } // NEXT: DISPLAY GROUP
            System.out.println();
-           System.out.println("Height Group - 35-40 inches:");
-           System.out.println("----------------------");
-           System.out.println();
-           for (Player player : heightGroupOne) {
-            System.out.printf("%s %s - %d inches%n", 
-                              player.getFirstName(),
-                              player.getLastName(),
-                              player.getHeightInInches());
-           }
-           System.out.println();
-           System.out.println("Height Group - 41-47 inches:");
-           System.out.println("----------------------");
-    
-           for (Player player : heightGroupTwo) {
-            System.out.printf("%s %s - %d inches%n", 
-                              player.getFirstName(),
-                              player.getLastName(),
-                              player.getHeightInInches());
-          
         
-        }
-           System.out.println();
-           System.out.println("Height Group - 47-50 inches:");
-           System.out.println("----------------------");
-           
-           for (Player player : heightGroupThree) {
-             System.out.printf("%s %s - %d inches%n", 
-                              player.getFirstName(),
-                              player.getLastName(),
-                              player.getHeightInInches());
+           for (Map.Entry<String, List<Player>> entry: heightGroups.entrySet()) {
+            System.out.println("Height Group - " + entry.getKey());
+            System.out.println("----------------------");
+            System.out.println();
+            
+            List<Player> groupPlayers = displayPlayerOrder(entry.getValue());
+            
+            for (Player player : groupPlayers) {
+              System.out.printf("%s %s - %d inches%n",
+                                player.getFirstName(),
+                                player.getLastName(),
+                                player.getHeightInInches());
             }
+           }
         
         
           System.out.println();
@@ -347,5 +323,39 @@ public class LeagueManager {
         
         return sortedPlayers;
       }
-  } 
+  
+      //shows available players
+     
+      public static List<Player> getAvailablePlayers(Player[] players, List<Team> allTeams) {
+        
+        List<Player> availablePlayers = new ArrayList<>(Arrays.asList(players));
+        
+        //removing player from the available list
+        
+        for (Team team: allTeams) {
+          availablePlayers.removeAll(team.getPlayers());
+        }
+        
+        return displayPlayerOrder(availablePlayers); //returns available players in ABC order
+        
+     }
+  
+     // creating reusable method for choosing team
+      
+    public static Team chosenTeam(Scanner scanner, List<Team> allTeams) {
+      List<Team> sortedTeams = displayTeamOrder(allTeams);
+      int counter = 1;
+      
+      for (Team team : sortedTeams) {
+        System.out.printf("%d. %s%n", counter, team.getTeamName());
+        counter++;
+      }
+      
+      System.out.print("Selected Team: ");
+      int userTeamSelection = scanner.nextInt();
+      scanner.nextLine();
+      
+      return sortedTeams.get(userTeamSelection - 1);
+    }
+  }
    
